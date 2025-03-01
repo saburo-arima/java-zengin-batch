@@ -1,7 +1,7 @@
 package com.example.zengin.config;
 
-import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.security.KeyManagementException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
@@ -16,6 +16,8 @@ import javax.net.ssl.TrustManagerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.ResourceLoader;
 
 /**
  * 全銀TCP/IP通信のTLS設定クラス
@@ -38,6 +40,17 @@ public class ZenginTlsConfig {
     
     @Value("${zengin.tls.enabled:true}")
     private boolean tlsEnabled;
+    
+    private final ResourceLoader resourceLoader;
+    
+    /**
+     * コンストラクタ
+     * 
+     * @param resourceLoader リソースローダー
+     */
+    public ZenginTlsConfig(ResourceLoader resourceLoader) {
+        this.resourceLoader = resourceLoader;
+    }
     
     /**
      * SSLコンテキストを生成します
@@ -100,8 +113,9 @@ public class ZenginTlsConfig {
     private KeyStore loadKeyStore(String path, String password) 
             throws KeyStoreException, NoSuchAlgorithmException, CertificateException, IOException {
         KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
-        try (FileInputStream fis = new FileInputStream(path)) {
-            keyStore.load(fis, password.toCharArray());
+        Resource resource = resourceLoader.getResource(path);
+        try (InputStream is = resource.getInputStream()) {
+            keyStore.load(is, password.toCharArray());
         }
         return keyStore;
     }

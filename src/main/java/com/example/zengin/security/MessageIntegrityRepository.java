@@ -1,21 +1,20 @@
 package com.example.zengin.security;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
 
 /**
  * メッセージ整合性情報を管理するリポジトリインターフェース
  * 整合性情報の保存や検索機能を提供します
  */
-public interface MessageIntegrityRepository {
-    
-    /**
-     * メッセージ整合性情報を保存します
-     * 
-     * @param integrityInfo 保存する整合性情報
-     * @return 保存された整合性情報
-     */
-    MessageIntegrityInfo save(MessageIntegrityInfo integrityInfo);
+@Repository
+public interface MessageIntegrityRepository extends JpaRepository<MessageIntegrityInfo, String> {
     
     /**
      * メッセージIDで整合性情報を検索します
@@ -26,19 +25,28 @@ public interface MessageIntegrityRepository {
     Optional<MessageIntegrityInfo> findByMessageId(String messageId);
     
     /**
-     * 全ての整合性情報を取得します
+     * 指定した日時以降の整合性情報を取得します
      * 
+     * @param cutoffDate 基準日時
      * @return 整合性情報のリスト
      */
-    List<MessageIntegrityInfo> findAll();
+    @Query("SELECT m FROM MessageIntegrityInfo m WHERE m.createdAt > :cutoffDate")
+    List<MessageIntegrityInfo> findByCreatedAtAfter(@Param("cutoffDate") LocalDateTime cutoffDate);
     
     /**
-     * 指定した日時以降の整合性情報を取得します
+     * 指定した日数以内の整合性情報を取得します
      * 
      * @param days 取得する日数
      * @return 整合性情報のリスト
      */
-    List<MessageIntegrityInfo> findRecentEntries(int days);
+    default List<MessageIntegrityInfo> findRecentEntries(int days) {
+        if (days <= 0) {
+            return List.of();
+        }
+        
+        LocalDateTime cutoffDate = LocalDateTime.now().minusDays(days);
+        return findByCreatedAtAfter(cutoffDate);
+    }
     
     /**
      * メッセージIDで整合性情報を削除します
@@ -46,5 +54,16 @@ public interface MessageIntegrityRepository {
      * @param messageId 削除するメッセージID
      * @return 削除に成功した場合はtrue、それ以外はfalse
      */
-    boolean deleteByMessageId(String messageId);
+    default boolean deleteByMessageId(String messageId) {
+        if (messageId == null) {
+            return false;
+        }
+        
+        if (existsById(messageId)) {
+            deleteById(messageId);
+            return true;
+        }
+        
+        return false;
+    }
 } 

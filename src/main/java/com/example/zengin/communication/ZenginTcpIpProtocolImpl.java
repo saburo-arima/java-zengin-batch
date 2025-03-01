@@ -54,7 +54,7 @@ public class ZenginTcpIpProtocolImpl implements ZenginTcpIpProtocol {
         try {
             if (useTLS) {
                 // SSL/TLS接続を確立
-                SSLSocketFactory sslSocketFactory = createSSLSocketFactory();
+                SSLSocketFactory sslSocketFactory = getSSLSocketFactory();
                 SSLSocket sslSocket = (SSLSocket) sslSocketFactory.createSocket(hostAddress, port);
                 
                 // TLS 1.2以上を使用
@@ -68,7 +68,7 @@ public class ZenginTcpIpProtocolImpl implements ZenginTcpIpProtocol {
                 this.socket = sslSocket;
             } else {
                 // 非SSL接続（テスト用または閉域網用）
-                this.socket = new Socket(hostAddress, port);
+                this.socket = createNonTLSSocket(hostAddress, port);
             }
             
             this.inputStream = socket.getInputStream();
@@ -243,11 +243,12 @@ public class ZenginTcpIpProtocolImpl implements ZenginTcpIpProtocol {
     
     /**
      * SSL/TLSソケットファクトリを作成します
+     * テスト用にprotectedに変更
      * 
      * @return SSLSocketFactory インスタンス
      * @throws ZenginCommunicationException SSL初期化エラー発生時
      */
-    private SSLSocketFactory createSSLSocketFactory() throws ZenginCommunicationException {
+    protected SSLSocketFactory getSSLSocketFactory() throws ZenginCommunicationException {
         try {
             SSLContext sslContext = SSLContext.getInstance("TLS");
             
@@ -267,6 +268,19 @@ public class ZenginTcpIpProtocolImpl implements ZenginTcpIpProtocol {
         } catch (Exception e) {
             throw new ZenginCommunicationException("SSL/TLS初期化に失敗しました: " + e.getMessage(), e, "E010");
         }
+    }
+    
+    /**
+     * 非TLSソケットを作成します
+     * テスト用に追加
+     * 
+     * @param hostAddress ホストアドレス
+     * @param port ポート番号
+     * @return Socket インスタンス
+     * @throws IOException 接続エラー発生時
+     */
+    protected Socket createNonTLSSocket(String hostAddress, int port) throws IOException {
+        return new Socket(hostAddress, port);
     }
     
     /**
@@ -292,6 +306,7 @@ public class ZenginTcpIpProtocolImpl implements ZenginTcpIpProtocol {
                 )
                 .toArray(String[]::new);
     }
+    
     /**
      * TLS使用フラグを設定します
      * 

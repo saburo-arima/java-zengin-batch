@@ -7,6 +7,7 @@ import java.util.logging.Logger;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.example.zengin.communication.ZenginCommunicationException;
 import com.example.zengin.format.ZenginMessage;
@@ -16,6 +17,7 @@ import com.example.zengin.format.ZenginMessage;
  * 全銀メッセージの整合性検証機能を提供します
  */
 @Service
+@Transactional
 public class MessageIntegrityService {
     
     private static final Logger logger = Logger.getLogger(MessageIntegrityService.class.getName());
@@ -91,7 +93,7 @@ public class MessageIntegrityService {
             String messageId = message.getFileId();
             
             // 保存された整合性情報を検索
-            Optional<MessageIntegrityInfo> savedInfoOpt = integrityRepository.findByMessageId(messageId);
+            Optional<MessageIntegrityInfo> savedInfoOpt = integrityRepository.findById(messageId);
             
             if (!savedInfoOpt.isPresent()) {
                 logger.warning("メッセージID " + messageId + " の整合性情報が見つかりません");
@@ -196,9 +198,9 @@ public class MessageIntegrityService {
      * @return 重複している場合はtrue、それ以外はfalse
      */
     public boolean isDuplicateMessage(String messageId) {
-        Optional<MessageIntegrityInfo> existingInfo = integrityRepository.findByMessageId(messageId);
+        boolean exists = integrityRepository.existsById(messageId);
         
-        if (existingInfo.isPresent()) {
+        if (exists) {
             logger.warning("メッセージID " + messageId + " は既に処理されています");
             return true;
         }

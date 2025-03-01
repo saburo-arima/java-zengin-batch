@@ -9,8 +9,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 
 import com.example.zengin.communication.ZenginCommunicationException;
+import com.example.zengin.config.TestTlsConfig;
 import com.example.zengin.format.ZenginMessage;
 import com.example.zengin.format.ZenginMessage.MessageType;
 
@@ -18,6 +20,7 @@ import com.example.zengin.format.ZenginMessage.MessageType;
  * メッセージ整合性チェック機能のテストクラス
  */
 @SpringBootTest
+@Import(TestTlsConfig.class)
 public class MessageIntegrityTest {
     
     @Autowired
